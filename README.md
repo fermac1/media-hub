@@ -1,66 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PDF and Video Upload & View Example
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This project demonstrates how to upload and view PDF files as well as video files using a simple web interface with HTML, JavaScript, and API calls to a server (running locally). The following features are included:
 
-## About Laravel
+- **PDF Upload and View**: Users can upload a PDF file, and after successful upload, the PDF is displayed on the webpage.
+- **Video Playback**: Users can check if a video file is available and view/download it.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **PDF Upload**: Upload a PDF using an HTML form and display it on the page after uploading.
+- **Video Playback**: Check if a video is available on the server and play it in a video player.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Prerequisites
 
-## Learning Laravel
+- **API Server**: This assumes you have an API running on `http://127.0.0.1:8000`. The API should have the following endpoints:
+  - `POST /api/upload-pdf`: For uploading the PDF file.
+  - `GET /api/view-pdf/{filename}`: For viewing the uploaded PDF file.
+  - `GET /api/watch-video/{filename}`: For video playback.
+  - `GET /api/download-video/{filename}`: For downloading the video file.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Make sure your API is set up and running on the specified base URL.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## How to Use
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Upload PDF**:
+   - Choose a PDF file from your local machine using the file input.
+   - Click the **Upload** button.
+   - The PDF will be uploaded and displayed using an `<iframe>` element.
 
-## Laravel Sponsors
+2. **View Video**:
+   - The script checks if a video file (`guide.mp4`) is available.
+   - If the video is available, a video player will be shown, and the user can play or download the video.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Code Example
 
-### Premium Partners
+Below is the HTML and JavaScript for the interface:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Upload & View</title>
+</head>
+<body>
+    <h2>Upload PDF</h2>
+    <form id="uploadForm">
+        <input type="file" name="pdf" id="pdf" accept="application/pdf">
+        <button type="submit">Upload</button>
+    </form>
 
-## Contributing
+    <h2>View Uploaded PDF</h2>
+    <iframe src="http://127.0.0.1:8000/api/view-pdf/guide.pdf" id="pdfViewer" width="1000" height="500"></iframe>
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-## Code of Conduct
+            const formData = new FormData();
+            const file = document.getElementById('pdf').files[0];
+            formData.append('pdf', file);
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/upload-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
 
-## Security Vulnerabilities
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Upload successful!');
+                    document.getElementById('pdfViewer').style.display = 'block';
+                    document.getElementById('pdfViewer').src = result.url + '?t=' + new Date().getTime();
+                } else {
+                    alert('Upload failed: ' + result.message || result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            const filename = 'guide.mp4';
+            const baseUrl = 'http://127.0.0.1:8000/api';
 
-## License
+            const videoPlayer = document.getElementById('videoPlayer');
+            const downloadLink = document.getElementById('downloadLink');
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+            fetch(`${baseUrl}/watch-video/${filename}`, { method: 'HEAD' })
+                .then((res) => {
+                    if (res.ok) {
+                        const bust = '?t=' + new Date().getTime();
+                        videoPlayer.src = `${baseUrl}/watch-video/${filename}${bust}`;
+                        downloadLink.href = `${baseUrl}/download-video/${filename}`;
+                        videoPlayer.style.display = 'block';
+                        downloadLink.style.display = 'inline';
+                    } else {
+                        videoPlayer.style.display = 'none';
+                        downloadLink.style.display = 'none';
+                    }
+                })
+                .catch(() => {
+                    videoPlayer.style.display = 'none';
+                    downloadLink.style.display = 'none';
+                });
+        });
+    </script>
+
+</body>
+</html>
